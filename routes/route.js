@@ -1,13 +1,15 @@
 //requiring packages
 const express = require('express');
 const multer = require('multer');
-const { reset } = require('nodemon');
 const path = require('path');
 const File = require('../models/file');
 const fs=require('fs');
+const fs1=require('fs-extra');
+require('dotenv').config();
+const storageURL=process.env.FILE_STORAGE_URL;
 //storage engine
 const storage = multer.diskStorage({
-   destination: './upload',
+   destination: storageURL,
    filename: function (req, file, cb) {
       return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
    }
@@ -44,7 +46,7 @@ router.route('/')
    for (var i in data) {
       console.log(data[i]);
 
-      var x='upload/'+data[i].filename;
+      var x=storageURL+'/'+data[i].filename;
       var url=`http://localhost:3000/files/${data[i].filename}`;
       var ext=path.extname(data[i].filename);
 
@@ -69,7 +71,6 @@ router.route('/')
       success:isSuccess,
    });
 });
-
 
 router.route('/:id')
 .put(function(req,res)
@@ -107,10 +108,6 @@ router.route('/:id')
      
       }
    });
-
-   
-
-
 
 })
 
@@ -170,6 +167,64 @@ router.get('/download/:id', (req, res) => {
 
 
 
+//folders route
+router.route('/newfolder')
+.post(function(req,res)
+{
+     var folder=storageURL+'/'+req.body.folderName;
+     //console.log(req.body.folderName);
+     try
+     {
+        if(!fs.existsSync(folder))
+        {
+           fs.mkdirSync(folder);
+           res.json({
+              isCreated:"true"
+           });
+
+        }
+        else
+        {
+         res.json({
+            isCreated:"false"
+         });
+        }
+     }
+     catch(err)
+     {
+        res.send(err);
+     }
+
+})
+
+.put(function(req,res)
+{
+ 
+   var folder=storageURL+'/'+req.body.folderName;
+   var newName=storageURL+'/'+req.body.newName;
+   try {
+      fs.renameSync(folder , newName);
+      res.json({
+         isSuccess:"true"
+      });
+    } catch (err) {
+      res.send(err);
+    }
+})
+
+.delete(function(req,res)
+{
+   const folder = storageURL+'/'+req.body.folderName;
+
+   fs1.remove(folder, err => {
+     res.send(err);
+   });
+
+   res.json({
+      isSuccess:"true"
+   });
+   
+});
 
 
 //exproting router
