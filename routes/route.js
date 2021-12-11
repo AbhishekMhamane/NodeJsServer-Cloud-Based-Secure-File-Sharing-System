@@ -23,17 +23,19 @@ const upload = multer({
 //using express router
 let router = express.Router();
 
+
+
 //routes 
-router.route('/')
+router.route('/files')
 .get(function (req, res) {
 
    File.find({}, function (err, files) {
 
       if (err) {
-         res.send(err);
+         console.log(err);
       }
       else {
-         res.send(files);
+         res.status(200).send(files);
       }
    })
 
@@ -41,7 +43,6 @@ router.route('/')
 .post(upload.array('files', 4), (req, res) => {
 
    var data = req.files;
-   let isSuccess=true;
 
    for (var i in data) {
       console.log(data[i]);
@@ -60,26 +61,24 @@ router.route('/')
       file.save((err)=>{
          if(err)
          {
-            console.log(err);
-            isSuccess=false;
+            console.log(err); 
          }
       });
 
    }
 
-   res.json({
-      success:isSuccess,
-   });
+   res.status(201).json({isSuccess:"true"});
+
 });
 
-router.route('/:id')
+router.route('/file/:id')
 .put(function(req,res)
 {
   
 
    File.find({ _id: req.params.id }, (err, data) => {
       if (err) {
-         res.send(err);
+         console.log(err);
       }
       else {
          var fileExt = data[0].fileExt;
@@ -102,11 +101,12 @@ router.route('/:id')
       function(err){
          if(!err)
          {
-           res.send("Record Updated");
+            res.status(200).json({isSuccess:"true"});
          }
       });
      
       }
+
    });
 
 })
@@ -117,7 +117,7 @@ router.route('/:id')
    {
          if(err)
          {
-            res.send(err);
+            console.log(err);
          }
          else{
 
@@ -127,11 +127,10 @@ router.route('/:id')
                   console.log(err);
                }
                else{
-                  console.log("success deletion");
+                  res.status(200).json({isSuccess:"true"});
                }
             });
 
-            res.send("file deleted");
          }
    });
 
@@ -139,7 +138,7 @@ router.route('/:id')
 });
    
 
-router.get('/download/:id', (req, res) => {
+router.get('/file/download/:id', (req, res) => {
 
    File.find({ _id: req.params.id }, (err, data) => {
       if (err) {
@@ -147,9 +146,9 @@ router.get('/download/:id', (req, res) => {
       }
       else {
          var filePath = data[0].filePath;
-         res.download(filePath,data[0].fileName);
+         res.status(200).download(filePath,data[0].fileName);
 
-         //send files and display on web page
+        // send files and display on web page
          // var fileUrl=data[0].fileUrl;
          // res.send(`
          // <iframe
@@ -167,12 +166,19 @@ router.get('/download/:id', (req, res) => {
 
 
 
+
+
+
 //folders route
-router.route('/newfolder')
+
+
+router.route('/route/folder')
 .post(function(req,res)
 {
      var folder=storageURL+'/'+req.body.folderName;
-     //console.log(req.body.folderName);
+
+     console.log(req.body.folderName);
+     
      try
      {
         if(!fs.existsSync(folder))
@@ -214,11 +220,10 @@ router.route('/newfolder')
 
 .delete(function(req,res)
 {
-   const folder = storageURL+'/'+req.body.folderName;
-
-   fs1.remove(folder, err => {
-     res.send(err);
-   });
+   var folder = storageURL+'/'+req.body.folderName;
+  console.log(folder);
+   
+   fs.rmdirSync(folder);
 
    res.json({
       isSuccess:"true"
