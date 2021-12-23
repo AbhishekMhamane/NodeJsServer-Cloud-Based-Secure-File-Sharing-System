@@ -3,10 +3,10 @@ const mongoose=require('mongoose');
 
 //creating schema
 const fileSchema=mongoose.Schema({
-    fileName:String,
-    filePath:String,
-    fileUrl:String,
-    fileExt:String
+    fileName:{type:String,required:true},
+    filePath:{type:String,required:true,unique:true},
+    fileUrl:{type:String,required:true},
+    fileExt:{type:String,required:true}
 });
 
 //exporting mongoose model
