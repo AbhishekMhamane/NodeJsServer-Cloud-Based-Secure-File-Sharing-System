@@ -4,7 +4,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const router = require('./routes/route');
+
+const fileRoute = require('./routes/fileRoute');
+const userRoute = require('./routes/userRoute');
+const folderRoute = require('./routes/folderRoute');
 //initializing app
 const app = module.exports = express();
 //config dotenv
@@ -31,7 +34,9 @@ mongoose.connect(mongoDB_URL, { useNewUrlParser: true, useUnifiedTopology: true 
 
 
 //routes
-app.use('/', router);
+app.use('/files', fileRoute);
+app.use('/users',userRoute);
+app.use('/folder',folderRoute);
 
 //listen on port
 app.listen(port, () => `Server is running on port ${port} 🔥`);

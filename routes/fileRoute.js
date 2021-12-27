@@ -26,7 +26,7 @@ let router = express.Router();
 
 
 //routes 
-router.route('/files')
+router.route('/')
    .get(function (req, res) {
 
       File.find({}, function (err, files) {
@@ -159,62 +159,6 @@ router.get('/file/download/:id', (req, res) => {
 
 
 
-
-
-//folders route
-
-
-router.route('/route/folder')
-   .post(function (req, res) {
-      var folder = storageURL + '/' + req.body.folderName;
-
-      console.log(req.body.folderName);
-
-      try {
-         if (!fs.existsSync(folder)) {
-            fs.mkdirSync(folder);
-            res.json({
-               isCreated: "true"
-            });
-
-         }
-         else {
-            res.json({
-               isCreated: "false"
-            });
-         }
-      }
-      catch (err) {
-         res.send(err);
-      }
-
-   })
-
-   .put(function (req, res) {
-
-      var folder = storageURL + '/' + req.body.folderName;
-      var newName = storageURL + '/' + req.body.newName;
-      try {
-         fs.renameSync(folder, newName);
-         res.json({
-            isSuccess: "true"
-         });
-      } catch (err) {
-         res.send(err);
-      }
-   })
-
-   .delete(function (req, res) {
-      var folder = storageURL + '/' + req.body.folderName;
-      console.log(folder);
-
-      fs.rmdirSync(folder);
-
-      res.json({
-         isSuccess: "true"
-      });
-
-   });
 
 
 //exproting router
