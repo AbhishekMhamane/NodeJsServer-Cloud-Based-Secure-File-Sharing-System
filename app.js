@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 
 const fileRoute = require('./routes/fileRoute');
 const userRoute = require('./routes/userRoute');

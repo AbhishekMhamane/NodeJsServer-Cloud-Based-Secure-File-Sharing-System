@@ -15,12 +15,14 @@ router.route('/')
         });
     })
     .post((req, res) => {
-        var username = req.body.userName;
+        var userid = req.body.userId;
         var userpass = req.body.userPass;
+        var usermob = req.body.userMob;
 
         var user = new User({
-            userName: username,
-            userPass: userpass
+            userId: userid,
+            userPass: userpass,
+            userMob : usermob 
         });
 
         user.save((err) => {
@@ -49,7 +51,7 @@ router.route('/user')
     .put((req, res) => {
 
         User.updateOne({ userName: req.body.userName },
-            { $set: { userPass: req.body.userPass } },
+            { $set: { userPass: req.body.userPass ,userMob : req.body.userMob} },
             { overwrite: true },
             function (err, data) {
                 if (!err) {
