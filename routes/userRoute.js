@@ -15,14 +15,15 @@ router.route('/')
         });
     })
     .post((req, res) => {
+
         var userid = req.body.userId;
-        var userpass = req.body.userPass;
+        var username = req.body.userName;
         var usermob = req.body.userMob;
 
         var user = new User({
             userId: userid,
-            userPass: userpass,
-            userMob : usermob 
+            userName: username,
+            userMob: usermob
         });
 
         user.save((err) => {
@@ -35,11 +36,11 @@ router.route('/')
         });
     });
 
-router.route('/user')
+router.route('/:id')
 
     .get((req, res) => {
 
-        User.find({ userName: req.body.userName }, (err, data) => {
+        User.find({ _id: req.params.id }, (err, data) => {
             if (err) {
                 console.log(err);
             }
@@ -50,8 +51,8 @@ router.route('/user')
     })
     .put((req, res) => {
 
-        User.updateOne({ userName: req.body.userName },
-            { $set: { userPass: req.body.userPass ,userMob : req.body.userMob} },
+        User.updateOne({ _id: req.params.id },
+            { $set: { userName: req.body.userName, userMob: req.body.userMob } },
             { overwrite: true },
             function (err, data) {
                 if (!err) {
@@ -61,23 +62,14 @@ router.route('/user')
     })
     .delete((req, res) => {
 
-
-        User.find({ userName: req.body.userName }, (err, data) => {
+        User.findByIdAndRemove({ _id: req.params.id }, (err, data) => {
             if (err) {
                 console.log(err);
             }
             else {
-                User.findByIdAndRemove({ _id: data[0].id }, (err, data) => {
-                    if (err) {
-                        console.log(err);
-                    }
-                    else {
-                        res.status(200).json({ isSuccess: "true" });
-                    }
-                });
+                res.status(200).json({ isSuccess: "true" });
             }
         });
-
 
     });
 

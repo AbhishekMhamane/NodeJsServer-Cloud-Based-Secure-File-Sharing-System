@@ -1,5 +1,6 @@
 //requiring packages
 const express = require('express');
+var bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -23,8 +24,9 @@ app.use('/files', express.static(storageURl));
 
 
 //middlewares
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true }))
+
+app.use(express.json())
 
 //configuring 
 app.use(cors());

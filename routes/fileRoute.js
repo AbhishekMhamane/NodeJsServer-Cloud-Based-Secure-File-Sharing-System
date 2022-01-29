@@ -23,6 +23,10 @@ const upload = multer({
 //using express router
 let router = express.Router();
 
+router.post('/test',async(req,res)=>{
+   console.log(req.body);
+   res.send("got");
+});
 
 
 //routes 
@@ -43,7 +47,8 @@ router.route('/')
    .post(upload.array('files', 4), (req, res) => {
 
       var data = req.files;
-
+      console.log(req.body);
+      
       for (var i in data) {
          console.log(data[i]);
 
@@ -71,6 +76,11 @@ router.route('/')
    });
 
 router.route('/file/:id')
+   .get((req,res)=>{
+      File.find({ _id: req.query.params.id }, (err, data) => {
+                res.send(data);
+         });
+   })
    .put(function (req, res) {
 
 
