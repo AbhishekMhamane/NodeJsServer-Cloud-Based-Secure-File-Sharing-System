@@ -1,5 +1,10 @@
 const express = require('express');
+const fs = require('fs');
+
 const User = require('../models/user');
+
+require('dotenv').config();
+const storageURL = process.env.FILE_STORAGE_URL;
 
 let router = express.Router();
 
@@ -19,19 +24,44 @@ router.route('/')
         var userid = req.body.userId;
         var username = req.body.userName;
         var usermob = req.body.userMob;
+        var userpath = "";
+        var uid;
 
         var user = new User({
             userId: userid,
             userName: username,
-            userMob: usermob
+            userMob: usermob,
+            userPath: userpath
         });
 
-        user.save((err) => {
+        user.save((err, data) => {
             if (err) {
-                console.log(err);
+                res.send(err);
             }
             else {
-                res.status(201).json({ isSuccess: "true" });
+
+                userpath = storageURL + '/' + data.id;
+
+                if (!fs.existsSync(userpath)) {
+                    fs.mkdirSync(userpath);
+                }
+                else {
+                    res.status(401).json({ msg: "user is already present" });
+                }
+
+                User.updateOne({ _id: data.id },
+                    { $set: { userPath: userpath } },
+                    { overwrite: true },
+                    function (err, data) {
+                        if (!err) {
+                            res.status(201).json({ isSuccess: "true" });
+                        }
+                        else {
+                            res.status(401).json({ isSuccess: "false" });
+
+                        }
+                    });
+
             }
         });
     });

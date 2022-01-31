@@ -3,8 +3,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const File = require('../models/file');
+const User = require('../models/user');
 const fs = require('fs');
-//const fs1 = require('fs-extra');
+const fs1 = require('fs-extra');
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
 //storage engine
@@ -23,7 +24,7 @@ const upload = multer({
 //using express router
 let router = express.Router();
 
-router.post('/test',async(req,res)=>{
+router.post('/test', async (req, res) => {
    console.log(req.body);
    res.send("got");
 });
@@ -47,39 +48,100 @@ router.route('/')
    .post(upload.array('files', 4), (req, res) => {
 
       var data = req.files;
-      console.log(req.body);
-      
-      for (var i in data) {
-         console.log(data[i]);
+      //console.log(req.body.userId);
+      var userId = 'abhimhamane13@gmail.com';
 
-         var x = storageURL + '/' + data[i].filename;
-         var url = `http://localhost:3000/files/${data[i].filename}`;
-         var ext = path.extname(data[i].filename);
 
-         var file = new File({
-            fileName: data[i].originalname,
-            filePath: x,
-            fileUrl: url,
-            fileExt: ext
-         });
+      User.find({ userId: userId }, (err, user) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
 
-         file.save((err) => {
-            if (err) {
-               console.log(err);
+            console.log(user);
+            console.log(user[0].userPath);
+
+            for (var i in data) {
+               console.log(data[i]);
+
+               var x = user[0].userPath + '/' + data[i].filename;;
+               var url = `http://localhost:3000/files/${data[i].filename}`;
+               var ext = path.extname(data[i].filename);
+
+               var file = new File({
+                  userId: user[0].userId,
+                  fileName: data[i].originalname,
+                  filePath: x,
+                  fileUrl: url,
+                  fileExt: ext
+               });
+
+               file.save((err) => {
+                  if (err) {
+                     console.log(err);
+                  }
+               });
             }
-         });
 
-      }
+            for (var i in data) {
+               console.log(data[i]);
+      
+               var x = storageURL + '/' + data[i].filename;
+      
+               fs1.move(x,
+                  user[0].userPath + '/' + data[i].filename
+                  , function (err) {
+                     if (err) { console.log(err); }
+                     else { console.log("file moved"); }
+                  });
+      
+            }
+      
+         }
+
+      });
 
       res.status(201).json({ isSuccess: "true" });
+
+      // var data = req.files;
+      // //console.log(req.body.userId);
+
+      // for (var i in data) {
+      //    console.log(data[i]);
+
+      //    var x = storageURL + '/' + data[i].filename;
+      //    var url = `http://localhost:3000/files/${data[i].filename}`;
+      //    var ext = path.extname(data[i].filename);
+
+      //    var file = new File({
+      //       fileName: data[i].originalname,
+      //       filePath: x,
+      //       fileUrl: url,
+      //       fileExt: ext
+      //    });
+
+      //    file.save((err) => {
+      //       if (err) {
+      //          console.log(err);
+      //       }
+
+      //    });
+
+      // }
+
+
+      // res.status(201).json({ isSuccess: "true" });
+
+
+
 
    });
 
 router.route('/file/:id')
-   .get((req,res)=>{
+   .get((req, res) => {
       File.find({ _id: req.query.params.id }, (err, data) => {
-                res.send(data);
-         });
+         res.send(data);
+      });
    })
    .put(function (req, res) {
 
