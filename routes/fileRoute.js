@@ -50,7 +50,7 @@ router.route('/')
       var data = req.files;
       //console.log(req.body.userId);
       var userId = 'abhimhamane13@gmail.com';
-
+      var folderpath = 'C:/Users/abhim/OneDrive/Desktop/upload/61f50ce197c3775b7ae7e271/document';
 
       User.find({ userId: userId }, (err, user) => {
          if (err) {
@@ -61,15 +61,18 @@ router.route('/')
             console.log(user);
             console.log(user[0].userPath);
 
+
             for (var i in data) {
                console.log(data[i]);
 
-               var x = user[0].userPath + '/' + data[i].filename;;
+               //var x = user[0].userPath + '/' + data[i].filename;
+               var x = folderpath + '/' + data[i].filename;;
                var url = `http://localhost:3000/files/${data[i].filename}`;
                var ext = path.extname(data[i].filename);
 
                var file = new File({
                   userId: user[0].userId,
+                  folderPath : folderpath,
                   fileName: data[i].originalname,
                   filePath: x,
                   fileUrl: url,
@@ -89,7 +92,7 @@ router.route('/')
                var x = storageURL + '/' + data[i].filename;
       
                fs1.move(x,
-                  user[0].userPath + '/' + data[i].filename
+                 folderpath + '/' + data[i].filename
                   , function (err) {
                      if (err) { console.log(err); }
                      else { console.log("file moved"); }
