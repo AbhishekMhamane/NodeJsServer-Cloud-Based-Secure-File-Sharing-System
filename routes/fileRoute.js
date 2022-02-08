@@ -8,6 +8,8 @@ const fs = require('fs');
 const fs1 = require('fs-extra');
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
+const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
+
 //storage engine
 const storage = multer.diskStorage({
    destination: storageURL,
@@ -31,10 +33,12 @@ router.post('/test', async (req, res) => {
 
 
 //routes 
-router.route('/')
+//return all files of indiviual user using user id nothing but email id
+router.route('/:id')
    .get(function (req, res) {
 
-      File.find({}, function (err, files) {
+      var userid = req.params.id;
+      File.find({userId : userid}, function (err, files) {
 
          if (err) {
             console.log(err);
@@ -44,13 +48,15 @@ router.route('/')
          }
       })
 
-   })
+   });
+
+router.route('/')
    .post(upload.array('files', 4), (req, res) => {
 
       var data = req.files;
       //console.log(req.body.userId);
-      var userId = 'abhimhamane13@gmail.com';
-      var folderpath = 'C:/Users/abhim/OneDrive/Desktop/upload/61f50ce197c3775b7ae7e271/document';
+      var userId = 'maheshkadam@gmail.com';
+      var folderpath = USER_SPACE_PATH+'/620127cbd5fd607a2321d36b/demo';
 
       User.find({ userId: userId }, (err, user) => {
          if (err) {
@@ -58,8 +64,8 @@ router.route('/')
          }
          else {
 
-            console.log(user);
-            console.log(user[0].userPath);
+         console.log(user);
+         console.log(user[0].userPath);
 
 
             for (var i in data) {

@@ -2,30 +2,14 @@ const express = require('express');
 const fs = require('fs');
 const Folder = require('../models/folder');
 
+
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
-const test_url = process.env.test_url;
 
 let router = express.Router();
 
 //folders route
 router.route('/')
-   .get((req, res) => {
-
-      var userid = req.body.userId;
-      var path = req.body.folderPath;
-
-      Folder.find({ userId: userid, folderPath: path }, (err, data) => {
-         if (err) {
-            console.log(err);
-         }
-         else {
-
-            res.status(200).send(data);
-         }
-
-      });
-   })
    .post(function (req, res) {
 
       // var folderpath = storageURL + '/' + req.body.folderName;
@@ -71,6 +55,37 @@ router.route('/')
    });
 
    router.route('/:id')
+   //get all folders using userid nothing but emailid
+   .get((req, res) => {
+
+      var userid = req.params.id;
+      //var path = req.body.folderPath;
+
+      Folder.find({ userId: userid }, (err, data) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            res.status(200).send(data);
+         }
+
+      });
+
+      // var userid = req.body.userId;
+      // var path = req.body.folderPath;
+
+      // Folder.find({ userId: userid, folderPath: path }, (err, data) => {
+      //    if (err) {
+      //       console.log(err);
+      //    }
+      //    else {
+
+      //       res.status(200).send(data);
+      //    }
+
+      // });
+   })
    .put(function (req, res) {
 
       var id = req.params.id;
@@ -114,6 +129,7 @@ router.route('/')
       // console.log(folder);
 
       var folderid = req.params.id;
+      console.log(folderid);
 
       Folder.findByIdAndRemove(folderid, function (err, data) {
          if (err) {

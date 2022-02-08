@@ -5,6 +5,7 @@ const User = require('../models/user');
 
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
+const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
 
 let router = express.Router();
 
@@ -40,7 +41,7 @@ router.route('/')
             }
             else {
 
-                userpath = storageURL + '/' + data.id;
+                userpath = USER_SPACE_PATH + '/' + data.id;
 
                 if (!fs.existsSync(userpath)) {
                     fs.mkdirSync(userpath);
