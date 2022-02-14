@@ -26,11 +26,10 @@ const upload = multer({
 //using express router
 let router = express.Router();
 
-router.post('/test', async (req, res) => {
-   console.log(req.body);
-   res.send("got");
-});
-
+// router.post('/test', async (req, res) => {
+//    console.log(req.body);
+//    res.send("got");
+// });
 
 //routes 
 //return all files of indiviual user using user id nothing but email id
@@ -56,7 +55,7 @@ router.route('/')
       var data = req.files;
       //console.log(req.body.userId);
       var userId = 'maheshkadam@gmail.com';
-      var folderpath = USER_SPACE_PATH+'/620127cbd5fd607a2321d36b/demo';
+      var folderpath = USER_SPACE_PATH+'/620127cbd5fd607a2321d36b';
 
       User.find({ userId: userId }, (err, user) => {
          if (err) {
@@ -73,7 +72,7 @@ router.route('/')
 
                //var x = user[0].userPath + '/' + data[i].filename;
                var x = folderpath + '/' + data[i].filename;;
-               var url = `http://localhost:3000/files/${data[i].filename}`;
+               var url = `http://localhost:3000/view/${data[i].filename}`;
                var ext = path.extname(data[i].filename);
 
                var file = new File({
