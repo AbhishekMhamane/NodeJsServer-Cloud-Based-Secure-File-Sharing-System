@@ -40,7 +40,7 @@ mongoose.connect(mongoDB_URL, { useNewUrlParser: true, useUnifiedTopology: true 
 //routes
 app.use('/files', fileRoute);
 app.use('/users',userRoute);
-app.use('/folder',folderRoute);
+app.use('/folders',folderRoute);
 
 //main app path to modify current server path
 app.post('/modifypath',(req,res)=>{

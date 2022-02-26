@@ -54,6 +54,24 @@ router.route('/')
 
    });
 
+   router.route('/folder/:id')
+   //get all folders using folder id nothing but emailid
+   .get((req, res) => {
+
+      var id = req.params.id;
+      //var path = req.body.folderPath;
+
+      Folder.find({ _id: id}, (err, data) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            res.status(200).send(data);
+         }
+
+      });   });
+
    router.route('/:id')
    //get all folders using userid nothing but emailid
    .get((req, res) => {
@@ -61,7 +79,7 @@ router.route('/')
       var userid = req.params.id;
       //var path = req.body.folderPath;
 
-      Folder.find({ userId: userid }, (err, data) => {
+      Folder.find({ userId: userid}, (err, data) => {
          if (err) {
             console.log(err);
          }

@@ -71,7 +71,7 @@ router.route('/:id')
 
     .get((req, res) => {
 
-        User.find({ _id: req.params.id }, (err, data) => {
+        User.find({ userId: req.params.id }, (err, data) => {
             if (err) {
                 console.log(err);
             }

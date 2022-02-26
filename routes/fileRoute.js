@@ -54,8 +54,13 @@ router.route('/')
 
       var data = req.files;
       //console.log(req.body.userId);
-      var userId = 'maheshkadam@gmail.com';
-      var folderpath = USER_SPACE_PATH+'/620127cbd5fd607a2321d36b';
+      // var userId = req.userid;
+      // var folderpath = req.userpath;
+      console.log("form userid "+req.body.userid);
+      console.log("form userpath "+req.body.userpath);
+
+      var userId = req.body.userid;
+      var folderpath = req.body.userpath;
 
       User.find({ userId: userId }, (err, user) => {
          if (err) {
