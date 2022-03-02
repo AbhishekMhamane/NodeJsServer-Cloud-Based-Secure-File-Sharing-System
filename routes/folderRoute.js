@@ -16,6 +16,8 @@ router.route('/')
       var userid = req.body.userId;
       var foldername = req.body.folderName;
       var folderpath = req.body.folderPath;
+      var parentfolderid = req.body.parentFolderId;
+      
       var createFolder = req.body.folderPath + '/' + req.body.folderName;
       // var folderpath = req.body.folderpath;
 
@@ -27,6 +29,7 @@ router.route('/')
 
             var folder = new Folder({
                userId: userid,
+               parentFolderId: parentfolderid,
                folderName: foldername,
                folderPath: folderpath,
             });
@@ -190,6 +193,27 @@ router.route('/')
 
    });
 
+//route for moving folders 
+
+router.route('/move/folder')
+   .put(function (req, res) {
+
+      var folderid = req.body.folderId;
+      var destfolderid = req.body.destFolderId;
+
+      console.log(folderid);
+      console.log(destfolderid);
+      Folder.updateOne({ _id: folderid },
+         { $set: { parentFolderId: destfolderid } },
+         { overwrite: true },
+         function (err) {
+            if (!err) {
+               res.status(200).json({ isSuccess: "true" });
+            }
+         });
+
+
+   });
 
 //exproting router
 module.exports = router;

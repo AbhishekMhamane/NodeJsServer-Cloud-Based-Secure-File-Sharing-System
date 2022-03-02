@@ -6,6 +6,7 @@ const File = require('../models/file');
 const User = require('../models/user');
 const fs = require('fs');
 const fs1 = require('fs-extra');
+
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
 const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
@@ -31,13 +32,14 @@ let router = express.Router();
 //    res.send("got");
 // });
 
+
 //routes 
 //return all files of indiviual user using user id nothing but email id
 router.route('/:id')
    .get(function (req, res) {
 
       var userid = req.params.id;
-      File.find({userId : userid}, function (err, files) {
+      File.find({ userId: userid }, function (err, files) {
 
          if (err) {
             console.log(err);
@@ -56,11 +58,13 @@ router.route('/')
       //console.log(req.body.userId);
       // var userId = req.userid;
       // var folderpath = req.userpath;
-      console.log("form userid "+req.body.userid);
-      console.log("form userpath "+req.body.userpath);
+      console.log("form userid " + req.body.userid);
+      console.log("form userpath " + req.body.userpath);
+      console.log("form folderid " + req.body.parentfolderid);
 
       var userId = req.body.userid;
       var folderpath = req.body.userpath;
+      var folderid = req.body.parentfolderid;
 
       User.find({ userId: userId }, (err, user) => {
          if (err) {
@@ -68,8 +72,8 @@ router.route('/')
          }
          else {
 
-         console.log(user);
-         console.log(user[0].userPath);
+            console.log(user);
+            console.log(user[0].userPath);
 
 
             for (var i in data) {
@@ -82,7 +86,8 @@ router.route('/')
 
                var file = new File({
                   userId: user[0].userId,
-                  folderPath : folderpath,
+                  parentFolderId: folderid,
+                  folderPath: folderpath,
                   fileName: data[i].originalname,
                   filePath: x,
                   fileUrl: url,
@@ -98,18 +103,18 @@ router.route('/')
 
             for (var i in data) {
                console.log(data[i]);
-      
+
                var x = storageURL + '/' + data[i].filename;
-      
+
                fs1.move(x,
-                 folderpath + '/' + data[i].filename
+                  folderpath + '/' + data[i].filename
                   , function (err) {
                      if (err) { console.log(err); }
                      else { console.log("file moved"); }
                   });
-      
+
             }
-      
+
          }
 
       });
@@ -150,10 +155,81 @@ router.route('/')
 
    });
 
+
+router.route('/folder')
+   .post(upload.array('files'), (req, res) => {
+
+      var data = req.files;
+      //console.log(req.body.userId);
+      // var userId = req.userid;
+      // var folderpath = req.userpath;
+      console.log("form userid " + req.body.userid);
+      console.log("form userpath " + req.body.userpath);
+      console.log(data);
+      var userId = req.body.userid;
+      var folderpath = req.body.userpath;
+
+      User.find({ userId: userId }, (err, user) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            console.log(user);
+            console.log(user[0].userPath);
+
+
+            for (var i in data) {
+               console.log(data[i]);
+
+               //var x = user[0].userPath + '/' + data[i].filename;
+               var x = folderpath + '/' + data[i].filename;;
+               var url = `http://localhost:3000/view/${data[i].filename}`;
+               var ext = path.extname(data[i].filename);
+
+               var file = new File({
+                  userId: user[0].userId,
+                  folderPath: folderpath,
+                  fileName: data[i].originalname,
+                  filePath: x,
+                  fileUrl: url,
+                  fileExt: ext
+               });
+
+               file.save((err) => {
+                  if (err) {
+                     console.log(err);
+                  }
+               });
+            }
+
+            for (var i in data) {
+               console.log(data[i]);
+
+               var x = storageURL + '/' + data[i].filename;
+
+               fs1.move(x,
+                  folderpath + '/' + data[i].filename
+                  , function (err) {
+                     if (err) { console.log(err); }
+                     else { console.log("file moved"); }
+                  });
+
+            }
+
+         }
+
+      });
+
+      res.status(201).json({ isSuccess: "true" });
+
+   });
+
+//route for sending file to user by id
 router.route('/file/:id')
    .get((req, res) => {
-      File.find({ _id: req.query.params.id }, (err, data) => {
-         res.send(data);
+      File.find({ _id: req.params.id }, (err, data) => {
+         res.sendFile(data[0].filePath);
       });
    })
    .put(function (req, res) {
@@ -242,8 +318,25 @@ router.get('/file/download/:id', (req, res) => {
 });
 
 
+//route for the move files
+
+router.route('/move/file')
+   .put(function (req, res) {
+
+      var destfolderid = req.body.destFolderId;
+      var fileid = req.body.fileId;
 
 
+      File.updateOne({ _id: fileid },
+         { $set: { parentFolderId: destfolderid } },
+         { overwrite: true },
+         function (err) {
+            if (!err) {
+               res.status(200).json({ isSuccess: "true" });
+            }
+         });
+
+   });
 
 
 //exproting router
