@@ -1,9 +1,0 @@
-sem2 7.36
-sem3 9
-sem4 10
-sem6 9.91
-
-cgpa 9.04
-
-ssc 86.50
-diploma 87.80
