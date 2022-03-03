@@ -230,6 +230,7 @@ router.route('/file/:id')
    .get((req, res) => {
       File.find({ _id: req.params.id }, (err, data) => {
          res.sendFile(data[0].filePath);
+
       });
    })
    .put(function (req, res) {

@@ -4,6 +4,7 @@ var bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const frameguard = require('frameguard');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -14,7 +15,7 @@ const folderRoute = require('./routes/folderRoute');
 const app = express();
 //config dotenv
 require('dotenv').config();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 const mongoDB_URL = process.env.MONGODB_URL;
 
 const USER_SPACE_PATH = exports = process.env.USER_SPACE_PATH;
@@ -30,8 +31,13 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 //configuring 
-app.use(cors());
-app.use(helmet());
+app.use(cors({
+    "Access-Control-Allow-Origin": "*",
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+  }));
+ 
+app.use(frameguard({ action: 'SAMEORIGIN' }));
+
 app.use(morgan('dev'));
 //mongoose connection
 mongoose.connect(mongoDB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
