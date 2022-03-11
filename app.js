@@ -4,7 +4,6 @@ var bodyParser = require('body-parser')
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
-const frameguard = require('frameguard');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -36,7 +35,7 @@ app.use(cors({
     "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
   }));
  
-app.use(frameguard({ action: 'SAMEORIGIN' }));
+app.use(helmet());
 
 app.use(morgan('dev'));
 //mongoose connection

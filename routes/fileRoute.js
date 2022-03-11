@@ -3,9 +3,13 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const File = require('../models/file');
+const Folder = require('../models/folder');
 const User = require('../models/user');
 const fs = require('fs');
 const fs1 = require('fs-extra');
+
+const encrypt = require('../FileEncryption/en');
+const decrypt = require('../FileEncryption/de');
 
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
@@ -15,6 +19,7 @@ const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
 const storage = multer.diskStorage({
    destination: storageURL,
    filename: function (req, file, cb) {
+     // return cb(null, file.originalname)
       return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
    }
 });
@@ -33,6 +38,9 @@ let router = express.Router();
 // });
 
 
+function sleep(ms) {
+   return new Promise((resolve) => setTimeout(resolve, ms));
+}
 //routes 
 //return all files of indiviual user using user id nothing but email id
 router.route('/:id')
@@ -75,12 +83,10 @@ router.route('/')
             console.log(user);
             console.log(user[0].userPath);
 
-
             for (var i in data) {
-               console.log(data[i]);
+               console.log("uploaded file " + data[i]);
 
-               //var x = user[0].userPath + '/' + data[i].filename;
-               var x = folderpath + '/' + data[i].filename;;
+               var x = folderpath + '/' + data[i].filename;
                var url = `http://localhost:3000/view/${data[i].filename}`;
                var ext = path.extname(data[i].filename);
 
@@ -102,18 +108,85 @@ router.route('/')
             }
 
             for (var i in data) {
-               console.log(data[i]);
+               console.log("encryption file " + data[i]);
 
-               var x = storageURL + '/' + data[i].filename;
+               var file = storageURL + '/' + data[i].filename;
+               var password = 'password';
+               encrypt(file, password)
 
-               fs1.move(x,
-                  folderpath + '/' + data[i].filename
-                  , function (err) {
-                     if (err) { console.log(err); }
-                     else { console.log("file moved"); }
-                  });
+               console.log("Hello");
+               sleep(20000).then(() => {
+
+                  var x = storageURL + '/' + data[i].filename + '.enc';
+
+                  console.log("moving file ");
+                  console.log(x);
+                  console.log(folderpath + '/' + data[i].filename + '.enc');
+
+                  fs1.move(x,
+                     folderpath + '/' + data[i].filename + '.enc'
+                     , function (err) {
+                        if (err) { console.log(err); }
+                        else {
+                           console.log("file moved");
+                           fs.unlink(file, function (err) {
+                              if (err) {
+                                 console.log(err);
+                              }
+                              else {
+                                 console.log("original file deleted")
+                              }
+                           });
+
+                        }
+                     });
+
+
+               });
+               console.log("after sleep");
+
 
             }
+
+
+            // for (var i in data) {
+            //    console.log(data[i]);
+
+            //    //var x = user[0].userPath + '/' + data[i].filename;
+            //    var x = folderpath + '/' + data[i].filename;;
+            //    var url = `http://localhost:3000/view/${data[i].filename}`;
+            //    var ext = path.extname(data[i].filename);
+
+            //    var file = new File({
+            //       userId: user[0].userId,
+            //       parentFolderId: folderid,
+            //       folderPath: folderpath,
+            //       fileName: data[i].originalname,
+            //       filePath: x,
+            //       fileUrl: url,
+            //       fileExt: ext
+            //    });
+
+            //    file.save((err) => {
+            //       if (err) {
+            //          console.log(err);
+            //       }
+            //    });
+            // }
+
+            // for (var i in data) {
+            //    console.log(data[i]);
+
+            //    var x = storageURL + '/' + data[i].filename;
+
+            //    fs1.move(x,
+            //       folderpath + '/' + data[i].filename
+            //       , function (err) {
+            //          if (err) { console.log(err); }
+            //          else { console.log("file moved"); }
+            //       });
+
+            // }
 
          }
 
@@ -183,13 +256,12 @@ router.route('/folder')
                console.log(data[i]);
 
                //var x = user[0].userPath + '/' + data[i].filename;
-               var x = folderpath + '/' + data[i].filename;;
+               var x = folderpath + '/' + data[i].filename;
                var url = `http://localhost:3000/view/${data[i].filename}`;
                var ext = path.extname(data[i].filename);
 
                var file = new File({
                   userId: user[0].userId,
-                  folderPath: folderpath,
                   fileName: data[i].originalname,
                   filePath: x,
                   fileUrl: url,
@@ -212,7 +284,9 @@ router.route('/folder')
                   folderpath + '/' + data[i].filename
                   , function (err) {
                      if (err) { console.log(err); }
-                     else { console.log("file moved"); }
+                     else {
+                        console.log("file moved");
+                     }
                   });
 
             }
@@ -227,14 +301,25 @@ router.route('/folder')
 
 //route for sending file to user by id
 router.route('/file/:id')
-   .get((req, res) => {
-      File.find({ _id: req.params.id }, (err, data) => {
-         res.sendFile(data[0].filePath);
+   .get(function (req, res){
+      
+       File.find({ _id: req.params.id }, (err, data) => {
+         decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
+         console.log( data[0].filePath);
+         sleep(2000).then(() => {
+            res.sendFile(data[0].filePath);
+            sleep(2000).then(() => {fs.unlink(data[0].filePath,(err, data) => {
+               if(!err)
+               {
+                  console.log("file removed in download");
+               }
+            });});
+         })
 
       });
+      
    })
    .put(function (req, res) {
-
 
       File.find({ _id: req.params.id }, (err, data) => {
          if (err) {
@@ -299,8 +384,20 @@ router.get('/file/download/:id', (req, res) => {
          console.log(err);
       }
       else {
-         var filePath = data[0].filePath;
-         res.status(200).download(filePath, data[0].fileName);
+         decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
+         console.log( data[0].filePath);
+         sleep(2000).then(() => {
+            res.status(200).download(data[0].filePath, data[0].fileName);
+
+            sleep(2000).then(() => {
+               fs.unlink(data[0].filePath,(err, data) => {
+               if(!err)
+               {
+                  console.log("file removed in download");
+               }
+            });});
+         })
+         
 
          // send files and display on web page
          // var fileUrl=data[0].fileUrl;
@@ -327,15 +424,32 @@ router.route('/move/file')
       var destfolderid = req.body.destFolderId;
       var fileid = req.body.fileId;
 
+      Folder.find({ _id: destfolderid }, function (err, folder) {
 
-      File.updateOne({ _id: fileid },
-         { $set: { parentFolderId: destfolderid } },
-         { overwrite: true },
-         function (err) {
-            if (!err) {
-               res.status(200).json({ isSuccess: "true" });
-            }
+         File.find({ _id: fileid }, function (err, file) {
+
+            var destpath = folder[0].folderPath + '/' + file[0].fileName;
+
+            fs1.move(file[0].filePath, destpath, function (err) {
+               if (err) {
+                  res.send(err);
+               } else {
+                  console.log("Successfully moved the file!");
+               }
+            });
+
+            File.updateOne({ _id: fileid },
+               { $set: { parentFolderId: destfolderid, filePath: destpath } },
+               { overwrite: true },
+               function (err) {
+                  if (!err) {
+                     res.status(200).json({ isSuccess: "true" });
+                  }
+               });
          });
+
+      });
+
 
    });
 

@@ -1,7 +1,10 @@
 const express = require('express');
 const fs = require('fs');
-const Folder = require('../models/folder');
+const fs1 = require('fs-extra');
 
+
+
+const Folder = require('../models/folder');
 
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
@@ -17,54 +20,69 @@ router.route('/')
       var foldername = req.body.folderName;
       var folderpath = req.body.folderPath;
       var parentfolderid = req.body.parentFolderId;
-      
-      var createFolder = req.body.folderPath + '/' + req.body.folderName;
+
       // var folderpath = req.body.folderpath;
 
       console.log(req.body);
 
-      try {
-         if (!fs.existsSync(createFolder)) {
-            fs.mkdirSync(createFolder);
+     
 
-            var folder = new Folder({
-               userId: userid,
-               parentFolderId: parentfolderid,
-               folderName: foldername,
-               folderPath: folderpath,
-            });
 
-            folder.save((err) => {
-               if (err) {
-                  console.log(err);
+         var folder = new Folder({
+            userId: userid,
+            parentFolderId: parentfolderid,
+            folderName: foldername,
+            folderPath: "",
+         });
+
+
+         folder.save((err, record) => {
+            if (err) {
+               console.log(err);
+            }
+            else {
+
+               var createFolder = req.body.folderPath + '/' + record.id;
+
+               if (!fs.existsSync(createFolder)) {
+                  fs.mkdirSync(createFolder);
+
+                  Folder.updateOne({ _id: record.id },
+                     { $set: { folderPath: createFolder } },
+                     { overwrite: true },
+                     function (err, data) {
+                        if (!err) {
+                           res.status(201).json({ isSuccess: "true" });
+                        }
+                        else {
+                           res.status(401).json({ isSuccess: "false" });
+                        }
+                     });
+
                }
-            });
-
-            res.json({
-               isCreated: "true"
-            });
-
+               else {
+                  res.json({
+                     isCreated: "false"
+                  });
+               }  
          }
-         else {
-            res.json({
-               isCreated: "false"
-            });
-         }
-      }
-      catch (err) {
-         res.send(err);
-      }
+        
+   
+     
+   });
+
+         
 
    });
 
-   router.route('/folder/:id')
+router.route('/folder/:id')
    //get all folders using folder id nothing but emailid
    .get((req, res) => {
 
       var id = req.params.id;
       //var path = req.body.folderPath;
 
-      Folder.find({ _id: id}, (err, data) => {
+      Folder.find({ _id: id }, (err, data) => {
          if (err) {
             console.log(err);
          }
@@ -73,16 +91,17 @@ router.route('/')
             res.status(200).send(data);
          }
 
-      });   });
+      });
+   });
 
-   router.route('/:id')
+router.route('/:id')
    //get all folders using userid nothing but emailid
    .get((req, res) => {
 
       var userid = req.params.id;
       //var path = req.body.folderPath;
 
-      Folder.find({ userId: userid}, (err, data) => {
+      Folder.find({ userId: userid }, (err, data) => {
          if (err) {
             console.log(err);
          }
@@ -120,7 +139,7 @@ router.route('/')
             var newName = data[0].folderPath + '/' + req.body.newName;
             console.log(folder);
             console.log(newName);
-          
+
             try {
                fs.renameSync(folder, newName);
 
@@ -200,18 +219,40 @@ router.route('/move/folder')
 
       var folderid = req.body.folderId;
       var destfolderid = req.body.destFolderId;
+      var folderpath = "";
+      var destfolderpath = "";
 
-      console.log(folderid);
-      console.log(destfolderid);
-      Folder.updateOne({ _id: folderid },
-         { $set: { parentFolderId: destfolderid } },
-         { overwrite: true },
-         function (err) {
-            if (!err) {
-               res.status(200).json({ isSuccess: "true" });
-            }
+      Folder.find({ _id: destfolderid }, function (err, folder) {
+         destfolderpath = folder[0].folderPath;
+
+         Folder.find({ _id: folderid }, function (err, folder2) {
+
+            folderpath = folder2[0].folderPath;
+            destfolderpath = destfolderpath + '/' + folder2[0].folderName;
+
+            console.log(folderpath);
+            console.log(destfolderpath);
+
+            fs1.move(folderpath, destfolderpath, function (err) {
+               if (err) {
+                  res.send(err);
+               } else {
+                  console.log("Successfully moved the file!");
+               }
+            });
+
+            Folder.updateOne({ _id: folderid },
+               { $set: { parentFolderId: destfolderid, folderPath: destfolderpath } },
+               { overwrite: true },
+               function (err) {
+                  if (!err) {
+                     res.status(200).json({ isSuccess: "true" });
+                  }
+               });
+
          });
 
+      });
 
    });
 

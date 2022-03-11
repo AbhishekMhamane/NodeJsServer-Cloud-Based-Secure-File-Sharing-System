@@ -73,12 +73,13 @@ router.route('/:id')
 
         User.find({ userId: req.params.id }, (err, data) => {
             if (err) {
-                console.log(err);
+                console.log(err)
             }
             else {
                 res.status(200).send(data);
             }
         });
+
     })
     .put((req, res) => {
 
