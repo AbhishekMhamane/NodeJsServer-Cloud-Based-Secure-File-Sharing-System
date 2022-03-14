@@ -9,7 +9,7 @@ const fs = require('fs');
 const fs1 = require('fs-extra');
 
 const encrypt = require('../FileEncryption/en');
-const decrypt = require('../FileEncryption/de');
+const decrypt = require('../FileEncryption/de.js');
 
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
@@ -19,7 +19,7 @@ const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
 const storage = multer.diskStorage({
    destination: storageURL,
    filename: function (req, file, cb) {
-     // return cb(null, file.originalname)
+      // return cb(null, file.originalname)
       return cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`)
    }
 });
@@ -74,7 +74,7 @@ router.route('/')
       var folderpath = req.body.userpath;
       var folderid = req.body.parentfolderid;
 
-      User.find({ userId: userId }, (err, user) => {
+      User.find({ userId: userId }, async (err, user) => {
          if (err) {
             console.log(err);
          }
@@ -112,223 +112,116 @@ router.route('/')
 
                var file = storageURL + '/' + data[i].filename;
                var password = 'password';
-               encrypt(file, password)
+               const originalfile = await encrypt(file, password);
 
-               console.log("Hello");
-               sleep(20000).then(() => {
+               if (originalfile) {
 
-                  var x = storageURL + '/' + data[i].filename + '.enc';
+                  console.log(originalfile);
 
-                  console.log("moving file ");
-                  console.log(x);
-                  console.log(folderpath + '/' + data[i].filename + '.enc');
+                 
+                  if (fs.existsSync(originalfile)) {
+                     console.log("file present");
+                     //res.sendFile(originalfile);
+                     var x = storageURL + '/' + data[i].filename + '.enc';
 
-                  fs1.move(x,
-                     folderpath + '/' + data[i].filename + '.enc'
-                     , function (err) {
-                        if (err) { console.log(err); }
-                        else {
-                           console.log("file moved");
-                           fs.unlink(file, function (err) {
-                              if (err) {
-                                 console.log(err);
-                              }
-                              else {
-                                 console.log("original file deleted")
-                              }
-                           });
+                     console.log("moving file ");
+                     console.log(x);
+                     console.log(folderpath + '/' + data[i].filename + '.enc');
 
-                        }
-                     });
+                     fs1.move(x,
+                        folderpath + '/' + data[i].filename + '.enc'
+                        , function (err) {
+                           if (err) { console.log(err); }
+                           else {
+                              console.log("file moved");
+                              fs.unlink(file, function (err) {
+                                 if (err) {
+                                    console.log(err);
+                                 }
+                                 else {
+                                    console.log("original file deleted")
+                                 }
+                              });
 
+                           }
+                        });
 
-               });
-               console.log("after sleep");
-
-
-            }
-
-
-            // for (var i in data) {
-            //    console.log(data[i]);
-
-            //    //var x = user[0].userPath + '/' + data[i].filename;
-            //    var x = folderpath + '/' + data[i].filename;;
-            //    var url = `http://localhost:3000/view/${data[i].filename}`;
-            //    var ext = path.extname(data[i].filename);
-
-            //    var file = new File({
-            //       userId: user[0].userId,
-            //       parentFolderId: folderid,
-            //       folderPath: folderpath,
-            //       fileName: data[i].originalname,
-            //       filePath: x,
-            //       fileUrl: url,
-            //       fileExt: ext
-            //    });
-
-            //    file.save((err) => {
-            //       if (err) {
-            //          console.log(err);
-            //       }
-            //    });
-            // }
-
-            // for (var i in data) {
-            //    console.log(data[i]);
-
-            //    var x = storageURL + '/' + data[i].filename;
-
-            //    fs1.move(x,
-            //       folderpath + '/' + data[i].filename
-            //       , function (err) {
-            //          if (err) { console.log(err); }
-            //          else { console.log("file moved"); }
-            //       });
-
-            // }
-
-         }
-
-      });
-
-      res.status(201).json({ isSuccess: "true" });
-
-      // var data = req.files;
-      // //console.log(req.body.userId);
-
-      // for (var i in data) {
-      //    console.log(data[i]);
-
-      //    var x = storageURL + '/' + data[i].filename;
-      //    var url = `http://localhost:3000/files/${data[i].filename}`;
-      //    var ext = path.extname(data[i].filename);
-
-      //    var file = new File({
-      //       fileName: data[i].originalname,
-      //       filePath: x,
-      //       fileUrl: url,
-      //       fileExt: ext
-      //    });
-
-      //    file.save((err) => {
-      //       if (err) {
-      //          console.log(err);
-      //       }
-
-      //    });
-
-      // }
-
-
-      // res.status(201).json({ isSuccess: "true" });
-
-
-
-
-   });
-
-
-router.route('/folder')
-   .post(upload.array('files'), (req, res) => {
-
-      var data = req.files;
-      //console.log(req.body.userId);
-      // var userId = req.userid;
-      // var folderpath = req.userpath;
-      console.log("form userid " + req.body.userid);
-      console.log("form userpath " + req.body.userpath);
-      console.log(data);
-      var userId = req.body.userid;
-      var folderpath = req.body.userpath;
-
-      User.find({ userId: userId }, (err, user) => {
-         if (err) {
-            console.log(err);
-         }
-         else {
-
-            console.log(user);
-            console.log(user[0].userPath);
-
-
-            for (var i in data) {
-               console.log(data[i]);
-
-               //var x = user[0].userPath + '/' + data[i].filename;
-               var x = folderpath + '/' + data[i].filename;
-               var url = `http://localhost:3000/view/${data[i].filename}`;
-               var ext = path.extname(data[i].filename);
-
-               var file = new File({
-                  userId: user[0].userId,
-                  fileName: data[i].originalname,
-                  filePath: x,
-                  fileUrl: url,
-                  fileExt: ext
-               });
-
-               file.save((err) => {
-                  if (err) {
-                     console.log(err);
+                     res.status(201).json({ isfileCreated: "true" });
                   }
-               });
+
+               }
             }
-
-            for (var i in data) {
-               console.log(data[i]);
-
-               var x = storageURL + '/' + data[i].filename;
-
-               fs1.move(x,
-                  folderpath + '/' + data[i].filename
-                  , function (err) {
-                     if (err) { console.log(err); }
-                     else {
-                        console.log("file moved");
-                     }
-                  });
-
-            }
-
          }
 
       });
-
-      res.status(201).json({ isSuccess: "true" });
-
    });
 
 //route for sending file to user by id
 router.route('/file/:id')
-   .get(function (req, res){
-      
-       File.find({ _id: req.params.id }, (err, data) => {
-         decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
-         console.log( data[0].filePath);
-         sleep(2000).then(() => {
-            res.sendFile(data[0].filePath);
-            sleep(2000).then(() => {fs.unlink(data[0].filePath,(err, data) => {
-               if(!err)
-               {
-                  console.log("file removed in download");
-               }
-            });});
-         })
+   .get(async function (req, res) {
 
+
+      File.find({ _id: req.params.id }, async (err, data) => {
+
+         //res.sendFile(data[0].filePath);
+
+         if (fs.existsSync(data[0].filePath)) {
+            res.sendFile(data[0].filePath);
+         }
+         else {
+            const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
+
+            if (originalfile) {
+               console.log("promise fullfiled");
+               console.log(originalfile);
+
+
+               var setv = 100;
+               sleep(setv).then(() => {
+                  if (fs.existsSync(originalfile)) {
+                     console.log("file present");
+                     res.sendFile(originalfile);
+
+                     // sleep(2000).then(() => {
+                     //    fs.unlink(originalfile, (err, data) => {
+                     //       if (!err) {
+                     //          console.log("decrypted file removed");
+                     //       }
+                     //    });
+                     // });
+
+                  }
+                  else {
+                     setv += 50;
+                  }
+               })
+            }
+         }
       });
-      
+
    })
    .put(function (req, res) {
 
-      File.find({ _id: req.params.id }, (err, data) => {
+      console.log("in the war");
+      File.find({ id: req.params.id }, (err, data) => {
          if (err) {
             console.log(err);
          }
          else {
             var fileExt = data[0].fileExt;
-            var ext = path.extname(req.body.fileName);
             var fileName = req.body.fileName;
+            var Starred = req.body.starred;
+            var View = req.body.view;
+
+            var ext = '';
+
+            if(!fileName)
+            { 
+               fileName = data[0].fileName;
+            }
+
+           
+            ext = path.extname(fileName);
 
             if (ext !== '') {
                ext = fileExt;
@@ -339,7 +232,7 @@ router.route('/file/:id')
             }
 
             File.updateOne({ _id: req.params.id },
-               { $set: { fileName: fileName, fileExt: ext } },
+               { $set: { fileName: fileName ,starred : Starred, view : View } },
                { overwrite: true },
                function (err) {
                   if (!err) {
@@ -361,7 +254,7 @@ router.route('/file/:id')
          }
          else {
 
-            fs.unlink(data.filePath, function (err) {
+            fs.unlink(data.filePath + '.enc', function (err) {
                if (err) {
                   console.log(err);
                }
@@ -379,25 +272,38 @@ router.route('/file/:id')
 
 router.get('/file/download/:id', (req, res) => {
 
-   File.find({ _id: req.params.id }, (err, data) => {
+   File.find({ _id: req.params.id }, async (err, data) => {
       if (err) {
          console.log(err);
       }
       else {
-         decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
-         console.log( data[0].filePath);
-         sleep(2000).then(() => {
-            res.status(200).download(data[0].filePath, data[0].fileName);
 
-            sleep(2000).then(() => {
-               fs.unlink(data[0].filePath,(err, data) => {
-               if(!err)
-               {
-                  console.log("file removed in download");
+         const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
+
+         if (originalfile) {
+            console.log(originalfile);
+
+            var setv = 100;
+            sleep(setv).then(() => {
+
+               if (fs.existsSync(originalfile)) {
+                  console.log("file present");
+                  res.status(200).download(originalfile, data[0].fileName);
+
+                  sleep(10 * 60 * 1000).then(() => {
+                     fs.unlink(originalfile, (err, data) => {
+                        if (!err) {
+                           console.log("decrypted file removed");
+                        }
+                     });
+                  });
+
                }
-            });});
-         })
-         
+               else {
+                  setv += 50;
+               }
+            })
+         }
 
          // send files and display on web page
          // var fileUrl=data[0].fileUrl;
@@ -453,6 +359,41 @@ router.route('/move/file')
 
    });
 
+//starred files api
+router.get('/starred/:userid',(req,res)=>{
+
+   var userid = req.params.userid;
+   console.log(userid);
+  
+
+   File.find({userId : userid , starred : true},(err,files)=>{
+      if(!err)
+      {
+         res.status(200).send(files);
+      }
+      else
+      {
+         console.log(err);
+      }
+   });
+
+});
+
+//public search files
+router.get('/public/files',(req,res)=>{
+
+   File.find({ view : 'public'},(err,files)=>{
+      if(!err)
+      {
+         res.status(200).send(files);
+      }
+      else
+      {
+         console.log(err);
+      }
+   });
+
+});
 
 //exproting router
 module.exports = router;

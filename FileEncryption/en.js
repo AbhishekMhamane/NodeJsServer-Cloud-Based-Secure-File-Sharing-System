@@ -20,16 +20,17 @@ const encrypt = function (file,password) {
     // Create a write stream with a different file extension.
     const writeStream = fs.createWriteStream(path.join(file + ".enc"));
     
-    readStream
+    return new Promise((resolve, reject) => {
+      readStream
       .pipe(gzip)
       .pipe(cipher)
       .pipe(appendInitVect)
-      .pipe(writeStream);
+      .pipe(writeStream).on('finish',()=>{
+       
+          resolve(file +'.enc');
   
-      setTimeout(()=>{
-       console.log("waiting for writing file");
-  },2000);
-  
+      })
+    })
   }
 
   module.exports = encrypt;

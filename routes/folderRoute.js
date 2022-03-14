@@ -21,58 +21,49 @@ router.route('/')
       var folderpath = req.body.folderPath;
       var parentfolderid = req.body.parentFolderId;
 
+      console.log({ userid, foldername,folderpath, parentfolderid });
       // var folderpath = req.body.folderpath;
 
-      console.log(req.body);
+            var newfolder = new Folder({
+               userId: userid,
+               parentFolderId: parentfolderid,
+               folderName: foldername,
+               folderPath: "",
+            });
 
-     
-
-
-         var folder = new Folder({
-            userId: userid,
-            parentFolderId: parentfolderid,
-            folderName: foldername,
-            folderPath: "",
-         });
-
-
-         folder.save((err, record) => {
-            if (err) {
-               console.log(err);
-            }
-            else {
-
-               var createFolder = req.body.folderPath + '/' + record.id;
-
-               if (!fs.existsSync(createFolder)) {
-                  fs.mkdirSync(createFolder);
-
-                  Folder.updateOne({ _id: record.id },
-                     { $set: { folderPath: createFolder } },
-                     { overwrite: true },
-                     function (err, data) {
-                        if (!err) {
-                           res.status(201).json({ isSuccess: "true" });
-                        }
-                        else {
-                           res.status(401).json({ isSuccess: "false" });
-                        }
-                     });
-
+            newfolder.save((err, record) => {
+               if (err) {
+                  console.log(err);
                }
                else {
-                  res.json({
-                     isCreated: "false"
-                  });
-               }  
-         }
-        
-   
-     
-   });
 
-         
+                  var createFolder = folderpath + '/' + record.folderName;
 
+                  if (!fs.existsSync(createFolder)) {
+                     fs.mkdirSync(createFolder);
+
+                     Folder.updateOne({ _id: record.id },
+                        { $set: { folderPath: createFolder } },
+                        { overwrite: true },
+                        function (err, data) {
+                           if (!err) {
+                              res.status(201).json({ msg: "folder has created" });
+                           }
+                           else {
+                              res.status(401).json({ msg: "server has a error" });
+                           }
+                        });
+
+                  }
+                  else {
+                     res.status(401).json({
+                        msg: "server has a error"
+                     });
+                  }
+               }
+
+         });
+      
    });
 
 router.route('/folder/:id')
@@ -111,20 +102,6 @@ router.route('/:id')
          }
 
       });
-
-      // var userid = req.body.userId;
-      // var path = req.body.folderPath;
-
-      // Folder.find({ userId: userid, folderPath: path }, (err, data) => {
-      //    if (err) {
-      //       console.log(err);
-      //    }
-      //    else {
-
-      //       res.status(200).send(data);
-      //    }
-
-      // });
    })
    .put(function (req, res) {
 
@@ -177,7 +154,7 @@ router.route('/:id')
          }
          else {
 
-            folderpath = data.folderPath + '/' + data.folderName;
+            folderpath = data.folderPath;
             //console.log(folderpath);
             //fs.rmdirSync(folderpath);
 

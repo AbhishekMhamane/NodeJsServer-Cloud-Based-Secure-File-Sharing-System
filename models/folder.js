@@ -7,7 +7,7 @@ const folderSchema = mongoose.Schema({
     parentFolderId:{type:String , required: true},
     folderName: { type: String, required: true },
     folderPath: { type: String },
-    // starred: {type:boolean, default: false},
+    starred: {type:Boolean, default: false},
     usersPermission:[{userId:{type:String } ,role: {type:String } }],
     //folderUrl: { type: String, required: true },
     //fileExt: { type: String, required: true }

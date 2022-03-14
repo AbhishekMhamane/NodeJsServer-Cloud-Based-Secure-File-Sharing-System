@@ -9,7 +9,7 @@ const fileSchema = mongoose.Schema({
     filePath: { type: String, required: true, unique: true },
     fileUrl: { type: String, required: true },
     fileExt: { type: String, required: true },
-    // starred: {type:boolean, default: false},
+    starred: {type:Boolean, default: false},
     view : {type:String , default:"private" },
     usersPermission:[{userId:{type:String } ,role: {type:String } }],
     // folderPath:{type:String,required:true},
