@@ -50,13 +50,13 @@ router.route('/')
                               res.status(201).json({ msg: "folder has created" });
                            }
                            else {
-                              res.status(401).json({ msg: "server has a error" });
+                              res.status(400).json({ msg: "server has a error" });
                            }
                         });
 
                   }
                   else {
-                     res.status(401).json({
+                     res.status(400).json({
                         msg: "server has a error"
                      });
                   }
@@ -125,12 +125,12 @@ router.route('/:id')
                   { overwrite: true },
                   function (err) {
                      if (!err) {
-                        res.status(200).json({ isSuccess: "true" });
+                        res.status(200).json({ msg: "folder updated" });
                      }
                   });
 
             } catch (err) {
-               res.send(err);
+               console.log(err);
             }
 
          }
@@ -177,7 +177,7 @@ router.route('/:id')
                console.log("Directory path not found.")
             }
 
-            res.status(200).json({ isSuccess: "true" });
+            res.status(200).json( { msg: "folder deleted" } );
 
 
          }
@@ -212,7 +212,7 @@ router.route('/move/folder')
 
             fs1.move(folderpath, destfolderpath, function (err) {
                if (err) {
-                  res.send(err);
+                 console.log(err);
                } else {
                   console.log("Successfully moved the file!");
                }
@@ -223,7 +223,7 @@ router.route('/move/folder')
                { overwrite: true },
                function (err) {
                   if (!err) {
-                     res.status(200).json({ isSuccess: "true" });
+                     res.status(200).json({ msg: "folder moved" });
                   }
                });
 

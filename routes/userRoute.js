@@ -1,11 +1,13 @@
 const express = require('express');
 const fs = require('fs');
-
+const md5 = require('md5');
+const aes256 = require('aes256');
 const User = require('../models/user');
+const userKeys = require('../models/userKey');
 
 require('dotenv').config();
-const storageURL = process.env.FILE_STORAGE_URL;
 const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
+const key = process.env.ENCRYPTION_KEY;
 
 let router = express.Router();
 
@@ -50,7 +52,7 @@ router.route('/')
                     res.status(401).json({ msg: "user is already present" });
                 }
 
-                User.updateOne({ _id: data.id },
+                User.updateOne({ _id: userId.id },
                     { $set: { userPath: userpath } },
                     { overwrite: true },
                     function (err, data) {
@@ -73,13 +75,66 @@ router.route('/:id')
 
         User.find({ userId: req.params.id }, (err, data) => {
             if (err) {
-                console.log(err)
+                console.log(err);
+            }
+            else if(!data.length)
+            {
+                let userid = req.params.id;
+                let userpath = USER_SPACE_PATH + '/' + userid;
+
+                if (!fs.existsSync(userpath)) {
+                    fs.mkdirSync(userpath);
+                }
+                else {
+                    console.log("user space already exists");
+                }
+
+                var user = new User({
+                    userId: userid,
+                    userName: userid,
+                    userPath: userpath
+                });
+
+                user.save((err,newuser)=>{
+                    if(err)
+                    {
+                        console.log(err);
+                    }
+                    else
+                    {
+                        let userkey = Math.random().toString(36).substring(7) + userid;
+                        let md5hash = md5(userkey);
+                        const encrypted = aes256.encrypt(key, md5hash);
+                        
+                        var newuserKey = userKeys({
+                            userId : userid, 
+                            userKey : encrypted
+                        });
+
+                        newuserKey.save((err)=>{
+                            if(err)
+                            {
+                                console.log(err);
+                            }
+                            else
+                            {
+                                console.log("user key created successfully");
+                            }
+                        });
+
+                        res.status(201).send(newuser);
+                    }
+                });
+
+                
             }
             else {
-                res.status(200).send(data);
+               res.status(200).send(data);
             }
+            
         });
-
+        
+      
     })
     .put((req, res) => {
 
@@ -99,7 +154,7 @@ router.route('/:id')
                 console.log(err);
             }
             else {
-                res.status(200).json({ isSuccess: "true" });
+                res.status(200).json({ msg: "user deleted" });
             }
         });
 

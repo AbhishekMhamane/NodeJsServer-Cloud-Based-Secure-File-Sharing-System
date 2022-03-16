@@ -5,6 +5,10 @@ const path = require('path');
 const File = require('../models/file');
 const Folder = require('../models/folder');
 const User = require('../models/user');
+const userKeys = require('../models/userKey');
+const md5 = require('md5');
+const aes256 = require('aes256');
+
 const fs = require('fs');
 const fs1 = require('fs-extra');
 
@@ -13,7 +17,7 @@ const decrypt = require('../FileEncryption/de.js');
 
 require('dotenv').config();
 const storageURL = process.env.FILE_STORAGE_URL;
-const USER_SPACE_PATH = process.env.USER_SPACE_PATH;
+const key = process.env.ENCRYPTION_KEY;
 
 //storage engine
 const storage = multer.diskStorage({
@@ -83,74 +87,83 @@ router.route('/')
             console.log(user);
             console.log(user[0].userPath);
 
-            for (var i in data) {
-               console.log("uploaded file " + data[i]);
+            
+            const encryptedKey = await userKeys.findOne({ userId: userId });
+            const decryptedKey = aes256.decrypt(key, encryptedKey.userKey);
 
-               var x = folderpath + '/' + data[i].filename;
-               var url = `http://localhost:3000/view/${data[i].filename}`;
-               var ext = path.extname(data[i].filename);
+            
 
-               var file = new File({
-                  userId: user[0].userId,
-                  parentFolderId: folderid,
-                  folderPath: folderpath,
-                  fileName: data[i].originalname,
-                  filePath: x,
-                  fileUrl: url,
-                  fileExt: ext
-               });
+               for (var i in data) {
+                  console.log("uploaded file " + data[i]);
 
-               file.save((err) => {
-                  if (err) {
-                     console.log(err);
-                  }
-               });
-            }
+                  var x = folderpath + '/' + data[i].filename;
+                  var url = `http://localhost:3000/view/${data[i].filename}`;
+                  var ext = path.extname(data[i].filename);
 
-            for (var i in data) {
-               console.log("encryption file " + data[i]);
+                  var file = new File({
+                     userId: user[0].userId,
+                     parentFolderId: folderid,
+                     folderPath: folderpath,
+                     fileName: data[i].originalname,
+                     filePath: x,
+                     fileUrl: url,
+                     fileExt: ext
+                  });
 
-               var file = storageURL + '/' + data[i].filename;
-               var password = 'password';
-               const originalfile = await encrypt(file, password);
-
-               if (originalfile) {
-
-                  console.log(originalfile);
-
-                 
-                  if (fs.existsSync(originalfile)) {
-                     console.log("file present");
-                     //res.sendFile(originalfile);
-                     var x = storageURL + '/' + data[i].filename + '.enc';
-
-                     console.log("moving file ");
-                     console.log(x);
-                     console.log(folderpath + '/' + data[i].filename + '.enc');
-
-                     fs1.move(x,
-                        folderpath + '/' + data[i].filename + '.enc'
-                        , function (err) {
-                           if (err) { console.log(err); }
-                           else {
-                              console.log("file moved");
-                              fs.unlink(file, function (err) {
-                                 if (err) {
-                                    console.log(err);
-                                 }
-                                 else {
-                                    console.log("original file deleted")
-                                 }
-                              });
-
-                           }
-                        });
-
-                     res.status(201).json({ isfileCreated: "true" });
-                  }
-
+                  file.save((err) => {
+                     if (err) {
+                        console.log(err);
+                     }
+                  });
                }
-            }
+
+               for (var i in data) {
+                  console.log("encryption file " + data[i]);
+
+                  var file = storageURL + '/' + data[i].filename;
+                  const originalfile = await encrypt(file, decryptedKey);
+
+                  if (originalfile) {
+
+                     console.log(originalfile);
+
+
+                     if (fs.existsSync(originalfile)) {
+                        console.log("file present");
+                        //res.sendFile(originalfile);
+                        var x = storageURL + '/' + data[i].filename + '.enc';
+
+                        console.log("moving file ");
+                        console.log(x);
+                        console.log(folderpath + '/' + data[i].filename + '.enc');
+
+                        fs1.move(x,
+                           folderpath + '/' + data[i].filename + '.enc'
+                           , function (err) {
+                              if (err) { console.log(err); }
+                              else {
+                                 console.log("file moved");
+                                 fs.unlink(file, function (err) {
+                                    if (err) {
+                                       console.log(err);
+                                    }
+                                    else {
+                                       console.log("original file deleted")
+                                    }
+                                 });
+
+                              }
+                           });
+
+                        res.status(201).json({ msg: "file uploaded" });
+                     }
+
+                  }
+               }
+
+
+
+            
          }
 
       });
@@ -169,33 +182,44 @@ router.route('/file/:id')
             res.sendFile(data[0].filePath);
          }
          else {
-            const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
 
-            if (originalfile) {
-               console.log("promise fullfiled");
-               console.log(originalfile);
+            userKeys.find({ userId: data[0].userId }, async (err, userkey) => {
+               //
+
+               let encryptedKey = userkey[0].userKey;
+               let decryptedKey = aes256.decrypt(key, encryptedKey);
+               const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, decryptedKey);
+
+               if (originalfile) {
+                  console.log("promise fullfiled");
+                  console.log(originalfile);
 
 
-               var setv = 100;
-               sleep(setv).then(() => {
-                  if (fs.existsSync(originalfile)) {
-                     console.log("file present");
-                     res.sendFile(originalfile);
+                  var setv = 100;
+                  sleep(setv).then(() => {
+                     if (fs.existsSync(originalfile)) {
+                        console.log("file present");
+                        res.status(200).sendFile(originalfile);
 
-                     // sleep(2000).then(() => {
-                     //    fs.unlink(originalfile, (err, data) => {
-                     //       if (!err) {
-                     //          console.log("decrypted file removed");
-                     //       }
-                     //    });
-                     // });
+                        // sleep(2000).then(() => {
+                        //    fs.unlink(originalfile, (err, data) => {
+                        //       if (!err) {
+                        //          console.log("decrypted file removed");
+                        //       }
+                        //    });
+                        // });
 
-                  }
-                  else {
-                     setv += 50;
-                  }
-               })
-            }
+                     }
+                     else {
+                        setv += 50;
+                     }
+                  })
+               }
+
+
+               //
+            });
+
          }
       });
 
@@ -210,18 +234,7 @@ router.route('/file/:id')
          else {
             var fileExt = data[0].fileExt;
             var fileName = req.body.fileName;
-            var Starred = req.body.starred;
-            var View = req.body.view;
-
-            var ext = '';
-
-            if(!fileName)
-            { 
-               fileName = data[0].fileName;
-            }
-
-           
-            ext = path.extname(fileName);
+            var ext = path.extname(fileName);
 
             if (ext !== '') {
                ext = fileExt;
@@ -232,11 +245,11 @@ router.route('/file/:id')
             }
 
             File.updateOne({ _id: req.params.id },
-               { $set: { fileName: fileName ,starred : Starred, view : View } },
+               { $set: { fileName: fileName } },
                { overwrite: true },
                function (err) {
                   if (!err) {
-                     res.status(200).json({ isSuccess: "true" });
+                     res.status(200).json({ msg: "file updated" });
                   }
                });
 
@@ -259,7 +272,7 @@ router.route('/file/:id')
                   console.log(err);
                }
                else {
-                  res.status(200).json({ isSuccess: "true" });
+                  res.status(200).json({ msg: "file deleted" });
                }
             });
 
@@ -277,33 +290,43 @@ router.get('/file/download/:id', (req, res) => {
          console.log(err);
       }
       else {
+         userKeys.find({ userId: data[0].userId }, async (err, userkey) => {
 
-         const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, 'password');
+            //
 
-         if (originalfile) {
-            console.log(originalfile);
+            const encryptedKey = userkey[0].userKey;
+            const decryptedKey = aes256.decrypt(key, encryptedKey);
+            const originalfile = await decrypt(data[0].filePath + '.enc', data[0].filePath, decryptedKey);
 
-            var setv = 100;
-            sleep(setv).then(() => {
+            if (originalfile) {
+               console.log(originalfile);
 
-               if (fs.existsSync(originalfile)) {
-                  console.log("file present");
-                  res.status(200).download(originalfile, data[0].fileName);
+               var setv = 100;
+               sleep(setv).then(() => {
 
-                  sleep(10 * 60 * 1000).then(() => {
-                     fs.unlink(originalfile, (err, data) => {
-                        if (!err) {
-                           console.log("decrypted file removed");
-                        }
+                  if (fs.existsSync(originalfile)) {
+                     console.log("file present");
+                     res.status(200).download(originalfile, data[0].fileName);
+
+                     sleep(10 * 60 * 1000).then(() => {
+                        fs.unlink(originalfile, (err, data) => {
+                           if (!err) {
+                              console.log("decrypted file removed");
+                           }
+                        });
                      });
-                  });
 
-               }
-               else {
-                  setv += 50;
-               }
-            })
-         }
+                  }
+                  else {
+                     setv += 50;
+                  }
+               })
+            }
+
+
+            //
+         });
+
 
          // send files and display on web page
          // var fileUrl=data[0].fileUrl;
@@ -338,7 +361,7 @@ router.route('/move/file')
 
             fs1.move(file[0].filePath, destpath, function (err) {
                if (err) {
-                  res.send(err);
+                  console.log(err);
                } else {
                   console.log("Successfully moved the file!");
                }
@@ -349,7 +372,7 @@ router.route('/move/file')
                { overwrite: true },
                function (err) {
                   if (!err) {
-                     res.status(200).json({ isSuccess: "true" });
+                     res.status(200).json({ msg: "file moved" });
                   }
                });
          });
@@ -360,40 +383,90 @@ router.route('/move/file')
    });
 
 //starred files api
-router.get('/starred/:userid',(req,res)=>{
+router.get('/starred/:userid', (req, res) => {
 
    var userid = req.params.userid;
    console.log(userid);
-  
 
-   File.find({userId : userid , starred : true},(err,files)=>{
-      if(!err)
-      {
+
+   File.find({ userId: userid, starred: true }, (err, files) => {
+      if (!err) {
          res.status(200).send(files);
       }
-      else
-      {
+      else {
          console.log(err);
       }
    });
 
 });
+
+router.route('/starred/:id')
+
+   .put(function (req, res) {
+
+      File.find({ id: req.params.id }, (err, data) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            var Starred = req.body.starred;
+
+            File.updateOne({ _id: req.params.id },
+               { $set: { starred: Starred } },
+               { overwrite: true },
+               function (err) {
+                  if (!err) {
+                     res.status(200).json({ msg: "file updated" });
+                  }
+               });
+
+         }
+
+      });
+
+   });
 
 //public search files
-router.get('/public/files',(req,res)=>{
+router.get('/public/files', (req, res) => {
 
-   File.find({ view : 'public'},(err,files)=>{
-      if(!err)
-      {
+   File.find({ view: 'public' }, (err, files) => {
+      if (!err) {
          res.status(200).send(files);
       }
-      else
-      {
+      else {
          console.log(err);
       }
    });
 
 });
+
+
+router.route('/public/files/:id')
+   .put(function (req, res) {
+
+      File.find({ id: req.params.id }, (err, data) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            var View = req.body.view;
+
+            File.updateOne({ _id: req.params.id },
+               { $set: { view: View } },
+               { overwrite: true },
+               function (err) {
+                  if (!err) {
+                     res.status(200).json({ msg: "file updated" });
+                  }
+               });
+
+         }
+
+      });
+
+   });
 
 //exproting router
 module.exports = router;
