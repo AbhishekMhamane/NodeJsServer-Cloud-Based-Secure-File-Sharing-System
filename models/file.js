@@ -10,7 +10,7 @@ const fileSchema = mongoose.Schema({
     fileUrl: { type: String, required: true },
     fileExt: { type: String, required: true },
     starred: {type:Boolean, default: false},
-    view : {type:String , default:"private" },
+    public : {type:Boolean , default:false },
     usersPermission:[{userId:{type:String } ,role: {type:String } }],
     // folderPath:{type:String,required:true},
 });

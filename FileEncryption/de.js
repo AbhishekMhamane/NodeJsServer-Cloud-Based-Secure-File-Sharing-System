@@ -29,7 +29,7 @@ const decrypt = function(file,originalfile,password){
         .pipe(decipher)
         .pipe(unzip)
         .pipe(writeStream).on('finish', () => {
-          console.log("finished");
+          // console.log("finished");
           resolve(originalfile);
         });
     });
