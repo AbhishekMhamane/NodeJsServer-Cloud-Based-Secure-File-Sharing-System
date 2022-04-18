@@ -13,6 +13,8 @@ const nodemon = require("nodemon");
 const fileRoute = require('./routes/fileRoute');
 const userRoute = require('./routes/userRoute');
 const folderRoute = require('./routes/folderRoute');
+const proxyreRoute = require('./routes/proxyreRoute');
+
 //initializing app
 const app = express();
 //config dotenv
@@ -49,6 +51,7 @@ mongoose.connect(mongoDB_URL, { useNewUrlParser: true, useUnifiedTopology: true 
 app.use('/files', fileRoute);
 app.use('/users',userRoute);
 app.use('/folders',folderRoute);
+app.use('/proxy', proxyreRoute);
 
 //main app path to modify current server path
 app.post('/modifypath',(req,res)=>{

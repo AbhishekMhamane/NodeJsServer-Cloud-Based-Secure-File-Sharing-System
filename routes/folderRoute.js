@@ -24,45 +24,104 @@ router.route('/')
       console.log({ userid, foldername,folderpath, parentfolderid });
       // var folderpath = req.body.folderpath;
 
-            var newfolder = new Folder({
-               userId: userid,
-               parentFolderId: parentfolderid,
-               folderName: foldername,
-               folderPath: "",
-            });
+      if(parentfolderid === 'mydash')
+      { 
+         var newfolder = new Folder({
+            userId: userid,
+            parentFolderId: parentfolderid,
+            folderName: foldername,
+            folderPath: "",
+         });
 
-            newfolder.save((err, record) => {
-               if (err) {
-                  console.log(err);
+         newfolder.save((err, record) => {
+            if (err) {
+               console.log(err);
+            }
+            else {
+
+               var createFolder = folderpath + '/' + record.folderName;
+
+               if (!fs.existsSync(createFolder)) {
+                  fs.mkdirSync(createFolder);
+
+                  Folder.updateOne({ _id: record.id },
+                     { $set: { folderPath: createFolder } },
+                     { overwrite: true },
+                     function (err, data) {
+                        if (!err) {
+                           res.status(201).json({ msg: "folder has created" });
+                        }
+                        else {
+                           res.status(400).json({ msg: "server has a error" });
+                        }
+                     });
+
                }
                else {
+                  res.status(400).json({
+                     msg: "server has a error"
+                  });
+               }
+            }
 
-                  var createFolder = folderpath + '/' + record.folderName;
+      });
+      }
+      else{
 
-                  if (!fs.existsSync(createFolder)) {
-                     fs.mkdirSync(createFolder);
+         Folder.find({id : parentfolderid},(err,folder)=>{
 
-                     Folder.updateOne({ _id: record.id },
-                        { $set: { folderPath: createFolder } },
-                        { overwrite: true },
-                        function (err, data) {
-                           if (!err) {
-                              res.status(201).json({ msg: "folder has created" });
-                           }
-                           else {
-                              res.status(400).json({ msg: "server has a error" });
-                           }
-                        });
+            if(err)
+            { 
+               console.log(err);
+            }
+            else
+            { 
+               folderpath = folder[0].folderPath;
 
+               var newfolder = new Folder({
+                  userId: userid,
+                  parentFolderId: parentfolderid,
+                  folderName: foldername,
+                  folderPath: "",
+               });
+   
+               newfolder.save((err, record) => {
+                  if (err) {
+                     console.log(err);
                   }
                   else {
-                     res.status(400).json({
-                        msg: "server has a error"
-                     });
-                  }
-               }
+   
 
+                     var createFolder = folderpath + '/' + record.folderName;
+   
+                     if (!fs.existsSync(createFolder)) {
+                        fs.mkdirSync(createFolder);
+   
+                        Folder.updateOne({ _id: record.id },
+                           { $set: { folderPath: createFolder } },
+                           { overwrite: true },
+                           function (err, data) {
+                              if (!err) {
+                                 res.status(201).json({ msg: "folder has created" });
+                              }
+                              else {
+                                 res.status(400).json({ msg: "server has a error" });
+                              }
+                           });
+   
+                     }
+                     else {
+                        res.status(400).json({
+                           msg: "server has a error"
+                        });
+                     }
+                  }
+   
+               });
+            }
          });
+      }
+            
       
    });
 
