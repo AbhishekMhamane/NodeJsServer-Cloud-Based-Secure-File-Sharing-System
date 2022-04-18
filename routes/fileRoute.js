@@ -724,6 +724,41 @@ router.route('/public/file/:id')
 
    });
 
+
+router.route('/rate/file/:id')
+   .post(function (req, res) {
+
+      File.find({ id: req.params.id }, (err, data) => {
+         if (err) {
+            console.log(err);
+         }
+         else {
+
+            // console.log(req.body);
+            // console.log(data[0]);
+
+            const ratefile = data[0].rate.ratings;
+            var totalrating = parseInt(data[0].rate.totalRating) + parseInt(req.body.rating);
+            ratefile.push(req.body);
+
+            //console.log(totalrating);
+
+            File.updateOne({ _id: req.params.id },
+               { $set: { rate : {totalRating : totalrating , ratings : ratefile } } },
+               { overwrite: true },
+               function (err) {
+                  if (!err) {
+                     res.status(200).json({ msg: "file updated" });
+                  }
+               });
+
+
+         }
+
+      });
+
+   });
+
 //exproting router
 module.exports = router;
 

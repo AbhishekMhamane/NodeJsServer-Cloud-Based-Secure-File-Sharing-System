@@ -12,6 +12,7 @@ const fileSchema = mongoose.Schema({
     starred: {type:Boolean, default: false},
     public : {type:Boolean , default:false },
     usersPermission:[{userId:{type:String } ,role: {type:String } }],
+    rate : { totalRating : { type:Number ,default : 0} , ratings : [ {userId:{type:String } ,rating: {type:Number }} ] } 
     // folderPath:{type:String,required:true},
 });
 
