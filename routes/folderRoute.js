@@ -21,11 +21,10 @@ router.route('/')
       var folderpath = req.body.folderPath;
       var parentfolderid = req.body.parentFolderId;
 
-      console.log({ userid, foldername,folderpath, parentfolderid });
+      console.log({ userid, foldername, folderpath, parentfolderid });
       // var folderpath = req.body.folderpath;
 
-      if(parentfolderid === 'mydash')
-      { 
+      if (parentfolderid === 'mydash') {
          var newfolder = new Folder({
             userId: userid,
             parentFolderId: parentfolderid,
@@ -64,39 +63,38 @@ router.route('/')
                }
             }
 
-      });
+         });
       }
-      else{
+      else {
 
-         Folder.find({id : parentfolderid},(err,folder)=>{
+         Folder.find({ _id: parentfolderid }, (err, folder) => {
 
-            if(err)
-            { 
+            if (err) {
                console.log(err);
             }
-            else
-            { 
+            else {
                folderpath = folder[0].folderPath;
 
+               console.log(folder[0]);
                var newfolder = new Folder({
                   userId: userid,
                   parentFolderId: parentfolderid,
                   folderName: foldername,
                   folderPath: "",
                });
-   
+
                newfolder.save((err, record) => {
                   if (err) {
                      console.log(err);
                   }
                   else {
-   
+
 
                      var createFolder = folderpath + '/' + record.folderName;
-   
+
                      if (!fs.existsSync(createFolder)) {
                         fs.mkdirSync(createFolder);
-   
+
                         Folder.updateOne({ _id: record.id },
                            { $set: { folderPath: createFolder } },
                            { overwrite: true },
@@ -108,7 +106,7 @@ router.route('/')
                                  res.status(400).json({ msg: "server has a error" });
                               }
                            });
-   
+
                      }
                      else {
                         res.status(400).json({
@@ -116,13 +114,13 @@ router.route('/')
                         });
                      }
                   }
-   
+
                });
             }
          });
       }
-            
-      
+
+
    });
 
 router.route('/folder/:id')
@@ -166,37 +164,14 @@ router.route('/:id')
 
       var id = req.params.id;
 
-      Folder.find({ id: id }, (err, data) => {
-         if (err) {
-            console.log(err);
-         }
-         else {
-            var folder = data[0].folderPath + '/' + data[0].folderName;
-            var newName = data[0].folderPath + '/' + req.body.newName;
-            console.log(folder);
-            console.log(newName);
-
-            try {
-               fs.renameSync(folder, newName);
-
-               Folder.updateOne({ _id: id },
-                  { $set: { folderName: req.body.newName } },
-                  { overwrite: true },
-                  function (err) {
-                     if (!err) {
-                        res.status(200).json({ msg: "folder updated" });
-                     }
-                  });
-
-            } catch (err) {
-               console.log(err);
+      Folder.updateOne({ _id: id },
+         { $set: { folderName: req.body.newName } },
+         { overwrite: true },
+         function (err) {
+            if (!err) {
+               res.status(200).json({ msg: "folder updated" });
             }
-
-         }
-
-      });
-
-
+         });
 
    })
    .delete(function (req, res) {
@@ -236,7 +211,7 @@ router.route('/:id')
                console.log("Directory path not found.")
             }
 
-            res.status(200).json( { msg: "folder deleted" } );
+            res.status(200).json({ msg: "folder deleted" });
 
 
          }
@@ -271,7 +246,7 @@ router.route('/move/folder')
 
             fs1.move(folderpath, destfolderpath, function (err) {
                if (err) {
-                 console.log(err);
+                  console.log(err);
                } else {
                   console.log("Successfully moved the file!");
                }

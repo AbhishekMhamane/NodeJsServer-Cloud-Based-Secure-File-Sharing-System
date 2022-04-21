@@ -728,7 +728,7 @@ router.route('/public/file/:id')
 router.route('/rate/file/:id')
    .post(function (req, res) {
 
-      File.find({ id: req.params.id }, (err, data) => {
+      File.find({ _id: req.params.id }, (err, data) => {
          if (err) {
             console.log(err);
          }
@@ -741,7 +741,7 @@ router.route('/rate/file/:id')
             var totalrating = parseInt(data[0].rate.totalRating) + parseInt(req.body.rating);
             ratefile.push(req.body);
 
-            //console.log(totalrating);
+            console.log(totalrating);
 
             File.updateOne({ _id: req.params.id },
                { $set: { rate : {totalRating : totalrating , ratings : ratefile } } },
