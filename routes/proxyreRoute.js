@@ -40,9 +40,11 @@ router.route('/:uid/:id')
                let decryptedKey = aes256.decrypt(key, encryptedKey);
                //let decryptedKey = '4aed0b236004da9c8570160c774ffd96';
                //let decryptedKey = "e686f279613c8fab8a2f2c5fee6f532c6b88e827e2a81742d9e89e159ce08824";
-               console.log("userKey");
-               console.log(userkey[0]);
-               console.log("decrypted ",decryptedKey);
+               // console.log("userKey");
+               // console.log(userkey[0]);
+               // console.log("decrypted ",decryptedKey);
+
+               console.log("Received request to file from receiver");
 
                const encryptedData = await PRE.init({ g: "The generator for G1", h: "The generator for G2", returnHex: false }).then(params => {
 
@@ -50,20 +52,23 @@ router.route('/:uid/:id')
 
                   const plainRandom = decryptedKey + plain.substring(32);
                   
-                  console.log(plainRandom);
+                  // console.log(plainRandom);
 
                   const A = PRE.keyGenInG1(params, { returnHex: true });
+                  console.log("Generated secret key and public key for sender : ",A);
 
                   const encrypted = PRE.enc(plainRandom, A.pk, params, { returnHex: true });
+                  console.log("Encrypting data using sender's public key : ",encrypted);
 
                   const reKey = PRE.rekeyGen(A.sk, pk, { returnHex: true });
+                  console.log("Generating reencryption key : ",reKey);
 
                   const reEncypted = PRE.reEnc(encrypted, reKey, {returnHex: true});
+                  console.log("Reencrypting data using Reencryption key : ",reEncypted);
 
                  // const reDecrypted = PRE.reDec(reEncypted, B.sk);
 
                   return new Promise((resolve, reject) => {
-                     console.log("Generated Reencryption keys");
                      resolve(reEncypted);
                   });
 
@@ -73,6 +78,7 @@ router.route('/:uid/:id')
 
                console.log(encryptedData);
 
+               console.log("Sending reEncypted Data and reEncypted key to user");
                res.status(200).send(encryptedData);
 
             });
